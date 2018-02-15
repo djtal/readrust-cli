@@ -11,19 +11,26 @@ fn main() {
                          -c, --count            'Show the count of post'");
 
     let matches = app.get_matches();
+    let feed = get_feed();
+
+    if matches.is_present("count") {
+        print_count(&feed);
+    }
 }
 
 extern crate reqwest;
 pub static URL: &str = "http://readrust.net/rust2018/feed.json";
 
-fn get_feed() -> String {
+fn get_feed() -> Feed {
     let client = reqwest::Client::new();
     let mut request = client.get(URL);
 
     let mut resp = request.send().unwrap();
     assert!(resp.status().is_success());
 
-    resp.text().unwrap()
+    let json = resp.text().unwrap();
+
+    serde_json::from_str(&json).unwrap()
 }
 
 extern crate serde;
@@ -51,10 +58,12 @@ struct FeedItem {
 struct Feed {
     version: String,
     title: String,
-    home_page: String,
+    home_page_url: String,
     feed_url: String,
     author: Author,
-    item: Vec<FeedItem>,
+    items: Vec<FeedItem>,
 }
 
-
+fn print_count(feed: &Feed) {
+    println!("Number of posts : {}", feed.items.len());
+}
