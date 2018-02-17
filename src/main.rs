@@ -15,6 +15,15 @@ fn main() {
 
     if matches.is_present("count") {
         print_count(&feed);
+    } else {
+        let iter = feed.items.iter();
+
+        if let Some(string) = matches.value_of("number") {
+            let number = string.parse().unwrap();
+            print_feed_table(iter.take(number))
+        } else {
+            print_feed_table(iter)
+        }
     }
 }
 
@@ -66,4 +75,25 @@ struct Feed {
 
 fn print_count(feed: &Feed) {
     println!("Number of posts : {}", feed.items.len());
+}
+
+#[macro_use]
+extern crate prettytable;
+
+fn print_feed_table<'feed, I: Iterator<Item = &'feed FeedItem>>(items: I) {
+    let mut table = prettytable::Table::new();
+
+    table.add_row(row!["Title", "Author", "Link"]);
+
+    for item in items {
+        let title = if item.title.len() >= 50 {
+            &item.title[0..49]
+        } else {
+            &item.title
+        };
+
+        table.add_row(row![title, item.author.name, item.url]);
+    }
+
+    table.printstd();
 }
